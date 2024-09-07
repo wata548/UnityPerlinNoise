@@ -13,8 +13,9 @@ public class MakePerlinNoise : MonoBehaviour
     [SerializeField] float AMP = 0.5f;
     [SerializeField] float FREQUENCY = 2;
     [SerializeField] int REPEAT = 3;
+    float[] increse;
 
-    void MakeMap()
+    void MakeMap(float x, float y)
     {
 
         //StreamWriter streamWriter = new StreamWriter("Assets/f.txt");
@@ -34,16 +35,16 @@ public class MakePerlinNoise : MonoBehaviour
 
                 for(int k = 0; k < REPEAT; k++)
                 {
-                    float power = Mathf.Pow(AMP, k) / Mathf.Pow(FREQUENCY, k);
-                    value[i, j] += MakeNoise(INTERVAL * i * power, INTERVAL * j * power);
+                    value[i, j] += MakeNoise((x + INTERVAL * i) * increse[k], (y + INTERVAL * j) * increse[k]);
                 }
                 value[i, j] /= REPEAT;
+
+                if(Mathf.Abs(1 - (x + INTERVAL * i)) < 0.01)Debug.Log($"{x + INTERVAL * i}, {y + INTERVAL * j} : {value[i, j]}");
                //streamWriter.Write(value[i, j] + " ");
-               // maxValue = maxValue < value[i, j] ? maxValue : value[i,j];
             }
             //streamWriter.Write("\n");
         }
-        Debug.Log(maxValue);
+        Debug.Log('*');
         terrainData.SetHeights(0, 0, value);
     }
 
@@ -67,20 +68,6 @@ public class MakePerlinNoise : MonoBehaviour
 
         float result = LinearInterpolation(interpolationLeft, interpolationRight, intervalY);
 
-        /*if(x == 0 && y == 0)
-        {
-            Debug.Log($"gridX {gridX}");
-            Debug.Log($"gridY {gridY}");
-            Debug.Log($"leftUp {leftUp}");
-            Debug.Log($"leftDown {leftDown}");
-            Debug.Log($"rightUp {rightUp}");
-            Debug.Log($"rightDown {rightDown}");
-            Debug.Log($"intervalX {intervalX}");
-            Debug.Log($"intervalY {intervalY}");
-            Debug.Log($"interpolationLeft {interpolationLeft}");
-            Debug.Log($"interpolationRight {interpolationRight}");
-            Debug.Log($"result {result}");
-        }*/
         return (result + 1)/ 2;
 
         float DotProduct(int gridX, int gridY, float x, float y)
@@ -100,19 +87,25 @@ public class MakePerlinNoise : MonoBehaviour
         float LinearInterpolation(float x1, float x2, float t) { return (1 - t) * x1 + t * x2; }
     }
 
-    
+
 
     void Awake()
     {
-        //File.Create("Assets/f.txt");
-        
+        increse = new float[20];
+        for(int i = 0; i < 20; i++)
+        {
+            increse[i] = Mathf.Pow(AMP, i) / Mathf.Pow(FREQUENCY, i);
+        }
     }
+
+    public float x = 0, y = 0;
 
     // Update is called once per frame
     void Update()
     {
-        if(Input.GetKeyDown(KeyCode.A)) {
-            MakeMap();
+        if(Input.GetButtonDown("Horizontal")) {
+            x += Input.GetAxisRaw("Horizontal") / 10;
+            MakeMap(x,y);
         }
     }
 }
