@@ -7,46 +7,115 @@ using UnityEditor;
 
 public class MakePerlinNoise : MonoBehaviour
 {
-    Texture2D map;
+    public float x = 0, y = 0;
+    int length;
+
+    TerrainData map;
     [SerializeField] int seed = 234;
     const float INTERVAL = 0.1f;
-    [SerializeField] float AMP = 0.5f;
+    [SerializeField] float AMP = 2;
     [SerializeField] float FREQUENCY = 2;
     [SerializeField] int REPEAT = 3;
     float[] increse;
+    float[] decrese;
 
-    void MakeMap(float x, float y)
+    public List<List<float>> mapBoard = new();
+    void MakeMap(float x = 0, float y = 0)
     {
 
         //StreamWriter streamWriter = new StreamWriter("Assets/f.txt");
-        TerrainData terrainData = GetComponent<Terrain>().terrainData;
+        length = map.heightmapResolution;
 
-        var length = terrainData.heightmapResolution;
-
-        float[,] value = terrainData.GetHeights(0, 0, length, length);
-
-        float maxValue = 100;
+        float[,] value = map.GetHeights(0, 0, length, length);
 
         for(int i = 0; i < length; i++)
         {
+            mapBoard.Add(new List<float>());
             for(int j = 0; j < length; j++)
             {
                 value[i, j] = 0;
 
                 for(int k = 0; k < REPEAT; k++)
                 {
-                    value[i, j] += MakeNoise((x + INTERVAL * i) * increse[k], (y + INTERVAL * j) * increse[k]);
+                    value[i, j] += MakeNoise(INTERVAL * i * increse[k], INTERVAL * j * increse[k]) / decrese[k];
                 }
-                value[i, j] /= REPEAT;
+                //value[i, j] /= REPEAT;
 
-                if(Mathf.Abs(1 - (x + INTERVAL * i)) < 0.01)Debug.Log($"{x + INTERVAL * i}, {y + INTERVAL * j} : {value[i, j]}");
+                mapBoard[i].Add(value[i, j]);
                //streamWriter.Write(value[i, j] + " ");
             }
             //streamWriter.Write("\n");
+            this.x = x + INTERVAL * i;
+            this.y = this.x;
         }
-        Debug.Log('*');
-        terrainData.SetHeights(0, 0, value);
+        map.SetHeights(0, 0, value);
     }
+
+
+    void Map(float x = 0, float y = 0)
+    {
+        float[,] value = map.GetHeights(0, 0, length, length);
+
+        for (int i = 0; i < length; i++)
+        {
+            for (int j = 0; j < length; j++)
+            {
+
+                for (int k = 0; k < REPEAT; k++)
+                {
+                    value[i, j] += 
+                        Mathf.PerlinNoise((x + INTERVAL * i) * increse[k], (y + INTERVAL * j) * increse[k]) / decrese[i];
+                }
+                value[i, j] /= REPEAT;
+            }
+        }
+        map.SetHeights(0, 0, value);
+    }
+
+
+    void Awake()
+    {
+        map = GetComponent<Terrain>().terrainData;
+        increse = new float[20];
+        decrese = new float[20];
+        increse[0] = 1;
+        decrese[0] = 1;
+        for(int i = 1; i < 20; i++)
+        {
+            increse[i] = Mathf.Pow(AMP, i);
+            decrese[i] = Mathf.Pow(FREQUENCY, i);
+        }
+        MakeMap();
+    }
+
+    
+
+    // Update is called once per frame
+    /*void Update()
+    {
+        if(Input.GetKeyDown(KeyCode.W))
+        {
+            mapBoard.Remove(mapBoard[0]);
+            List<float> temp = new();
+            for(int i = 0; i < length; i++)
+            {
+                x += INTERVAL;
+                temp.Add(0);
+                for(int j = 0; j < REPEAT; j++)
+                {
+                    temp[i] += MakeNoise(x + INTERVAL * increse[j], INTERVAL * i * increse[j]);
+                }
+            }
+        }
+    }*/
+
+
+
+
+
+
+
+
 
     float MakeNoise(float x, float y)
     {
@@ -68,7 +137,7 @@ public class MakePerlinNoise : MonoBehaviour
 
         float result = LinearInterpolation(interpolationLeft, interpolationRight, intervalY);
 
-        return (result + 1)/ 2;
+        return (result + 1) / 2;
 
         float DotProduct(int gridX, int gridY, float x, float y)
         {
@@ -85,27 +154,5 @@ public class MakePerlinNoise : MonoBehaviour
 
         float SmoothInterpolation(float x) { return x * x * (3 - 2 * x); }
         float LinearInterpolation(float x1, float x2, float t) { return (1 - t) * x1 + t * x2; }
-    }
-
-
-
-    void Awake()
-    {
-        increse = new float[20];
-        for(int i = 0; i < 20; i++)
-        {
-            increse[i] = Mathf.Pow(AMP, i) / Mathf.Pow(FREQUENCY, i);
-        }
-    }
-
-    public float x = 0, y = 0;
-
-    // Update is called once per frame
-    void Update()
-    {
-        if(Input.GetButtonDown("Horizontal")) {
-            x += Input.GetAxisRaw("Horizontal") / 10;
-            MakeMap(x,y);
-        }
     }
 }
