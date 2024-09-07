@@ -39,7 +39,8 @@ public class MakePerlinNoise : MonoBehaviour
                 {
                     value[i, j] += MakeNoise(INTERVAL * i * increse[k], INTERVAL * j * increse[k]) / decrese[k];
                 }
-                //value[i, j] /= REPEAT;
+                Debug.Log(value[i, j]);
+                value[i, j] /= 2;
 
                 mapBoard[i].Add(value[i, j]);
                //streamWriter.Write(value[i, j] + " ");
@@ -50,8 +51,6 @@ public class MakePerlinNoise : MonoBehaviour
         }
         map.SetHeights(0, 0, value);
     }
-
-
     void Map(float x = 0, float y = 0)
     {
         float[,] value = map.GetHeights(0, 0, length, length);
@@ -64,9 +63,10 @@ public class MakePerlinNoise : MonoBehaviour
                 for (int k = 0; k < REPEAT; k++)
                 {
                     value[i, j] += 
-                        Mathf.PerlinNoise((x + INTERVAL * i) * increse[k], (y + INTERVAL * j) * increse[k]) / decrese[i];
+                        Mathf.PerlinNoise((x + INTERVAL * i) / 5 * increse[k], (y + INTERVAL * j) / 5 * increse[k]) / decrese[i];
                 }
-                value[i, j] /= REPEAT;
+                Debug.Log(value[i, j]);
+                //value[i, j] /= REPEAT;
             }
         }
         map.SetHeights(0, 0, value);
